@@ -136,6 +136,11 @@ function createManifestTransform(
   appManifestFolder?: string,
 ): import('workbox-build').ManifestTransform {
   return async (entries) => {
+    const htmlUrls = new Set(
+      entries
+        .filter(e => e.url.endsWith('.html'))
+        .map(e => e.url.startsWith('/') ? e.url.slice(1) : e.url),
+    )
     entries.filter(e => e.url.endsWith('.html')).forEach((e) => {
       const url = e.url.startsWith('/') ? e.url.slice(1) : e.url
       if (url === 'index.html') {
@@ -144,8 +149,13 @@ function createManifestTransform(
       else {
         // the route the page is served at, whatever the Nitro prerender layout:
         // `about/index.html` (default) and `about.html` (`autoSubfolderIndex: false`)
-        // => `about`, `nested/page.html` => `nested/page`, `200.html` => `200`
-        e.url = url.replace(/(?:\/index)?\.html$/, '')
+        // => `about`, `nested/page.html` => `nested/page`, `200.html` => `200`.
+        // Next to `about.html`, `about/index.html` can only be the flat layout's
+        // `/about/` route: it keeps its trailing slash.
+        const route = url.replace(/(?:\/index)?\.html$/, '')
+        e.url = url.endsWith('/index.html') && htmlUrls.has(`${route}.html`)
+          ? `${route}/`
+          : route
       }
     })
 
