@@ -142,9 +142,10 @@ function createManifestTransform(
         e.url = base
       }
       else {
-        const parts = url.split('/')
-        parts[parts.length - 1] = parts[parts.length - 1].replace(/\.html$/, '')
-        e.url = parts.length > 1 ? parts.slice(0, parts.length - 1).join('/') : parts[0]
+        // the route the page is served at, whatever the Nitro prerender layout:
+        // `about/index.html` (default) and `about.html` (`autoSubfolderIndex: false`)
+        // => `about`, `nested/page.html` => `nested/page`, `200.html` => `200`
+        e.url = url.replace(/(?:\/index)?\.html$/, '')
       }
     })
 
